@@ -269,7 +269,9 @@ Parameters <- list(
   ini_pop <- 40,
   ### Generations (must be integer)
   gen <- 200,
+  ### Predation intensity
   pred_intensity <- 20, 
+  ### fitness varience between different species traits
   fitness_varience <- 5
 )
 #############
