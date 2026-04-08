@@ -42,7 +42,7 @@ Draw_habitat <- function(habitat){
 }
 
 #### Patch building: fully random
-Random_patch <- function(seed = 466057982386929236631, len_x, len_y){
+Random_patch <- function(seed = 466057982386929236631, len_x = 20, len_y = 20){
   
   ## idiots gate keeper
   len_x <- ceiling(len_x)
@@ -66,7 +66,12 @@ Random_patch <- function(seed = 466057982386929236631, len_x, len_y){
       col_code <- rgb(R, G, B)
     }
   )
-  Main_color <- colMeans(habitat[, c("R", "G", "B")])
+  #Main_color <- colMeans(habitat[, c("R", "G", "B")])
+  Main_color <- data.frame(color_no = 1,
+                           hex_code = rgb(mean(habitat$R),
+                                          mean(habitat$G),
+                                          mean(habitat$B)),
+                           percentage = 1)
   set.seed(NULL)
   display_main_color(main_color = Main_color)
   Habitat <- list(habitat = habitat, main_color = Main_color)
@@ -75,7 +80,7 @@ Random_patch <- function(seed = 466057982386929236631, len_x, len_y){
 }
 
 #### Patch building: random, single major color
-Major_color <- function(seed = 466057982386929236631, len_x, len_y, homo = 2){
+Major_color <- function(seed = 466057982386929236631, len_x = 20, len_y = 20, homo = 2){
   
   ## idiots gate keeper
   len_x <- ceiling(len_x)
@@ -93,7 +98,7 @@ Major_color <- function(seed = 466057982386929236631, len_x, len_y, homo = 2){
   major_G <- runif(1, 0.1, 0.9)
   major_B <- runif(1, 0.1, 0.9)
   ## Fix draw results (optional, number changeable)
-  set.seed(seed)
+  if(seed != 466057982386929236631){set.seed(seed)}
   ### Patch building
   habitat <- within(
     data.frame(
@@ -120,9 +125,9 @@ Major_color <- function(seed = 466057982386929236631, len_x, len_y, homo = 2){
 }
 
 #### Patch building: manual major colors and patch pattern
-Manual_color <- function(seed = 466057982386929236631, len_x, len_y, homo = 2,
+Manual_color <- function(seed = 466057982386929236631, len_x = 20, len_y = 20, homo = 2,
                          col = c("#8888FF", "#88FF88", "#FF8888"),
-                         col_count = c(33, 33, 34),
+                         col_ratio = c(33, 33, 34),
                          patch = 200){
   
   ## idiots gate keeper
@@ -132,10 +137,7 @@ Manual_color <- function(seed = 466057982386929236631, len_x, len_y, homo = 2,
     print("Habitat too small.")
     return("Habitat too small.")
   }
-  col_count <- round(col_count)
-  if(min(col_count) <= 0){
-    print("col_count must be positive integers.")
-  }
+  col_count <- round(abs(col_ratio)*patch/sum(col_ratio))
   
   if(seed != 466057982386929236631){set.seed(seed)}
   
@@ -202,6 +204,7 @@ Manual_color <- function(seed = 466057982386929236631, len_x, len_y, homo = 2,
   Main_color <- data.frame(color_no = c(1:length(col)),
                            hex_code = col,
                            percentage = col_count/sum(col_count))
+  set.seed(NULL)
   display_main_color(main_color = Main_color)
   Habitat_list <- list(habitat = Habitat, main_color = Main_color)
   Draw_habitat(habitat = Habitat)
@@ -302,15 +305,14 @@ predation <- function(sp_disp, habitat, species_trait, pred_intensity, fitness_v
   color_df$survive <- color_df$pred_decision - color_df$pred_prob
   color_df <- color_df[color_df$survive > 0, ]
   
+  sp_abund <- data.frame(species_number = c(1:nrow(species_trait)),
+                         individuals = 0)
   if(nrow(color_df) == 0){
-    sp_abund <- data.frame(species_number = c(1:length(species_trait)),
-                           individuals = 0)
     return(sp_abund)
   }
-  
-  sp_abund <- as.data.frame(table(color_df$sp))
-  colnames(sp_abund) <- c("species_number", "individuals")
-  
+  for (i in 1:nrow(sp_abund)) {
+    sp_abund$individuals[i] <- sum(color_df$sp == i)
+  }
   return(sp_abund)
   
 }
@@ -405,7 +407,7 @@ Natural_selection <- function(habitat, species_traits, ini_pop, gen, pred_intens
   len_y <- Habitat$y[nrow(Habitat)]
   
   if(nrow(species_traits) * ini_pop > (len_x - 2) * (len_y - 2)){
-    cat("Number of individuals larger than number of available patches.\nPlease change habitat size or initial individual number per species.")
+    cat("Number of individuals larger than number of available patches.\nPlease increase habitat size or decrease initial individual number per species.")
     return("Error in parameters settings.")
   }
   
@@ -423,13 +425,18 @@ Natural_selection <- function(habitat, species_traits, ini_pop, gen, pred_intens
       Sp_Disp <- dispersal(sp_pop = Sp_Pop, len_x = len_x, len_y = len_y)
       Sp_Pop <- predation(sp_disp = Sp_Disp, habitat = Habitat, species_trait = species_traits, pred_intensity = pred_intensity, fitness_varience = fitness_varience)
       Sp_Pop <- reproduction(sp_pop = Sp_Pop, ini_pop = ini_pop)
+      ext <- F
     }else{
       Sp_Pop <- reproduction(sp_pop = Sp_Pop, ini_pop = ini_pop)
+      ext <- T
     }
     ### save results
     pop_process <- rbind(pop_process, cbind(generation = g, Sp_Pop))
   }
   
+  if(ext == T){
+    print("All the individuals are eaten by the predaters. What have you done?")
+    }
   
   pop_process <- merge(pop_process, species_traits[, c("species_number", "col_code")],
                        by.x = "species_number", by.y = "species_number", all.x = TRUE)

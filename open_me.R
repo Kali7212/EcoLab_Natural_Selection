@@ -14,11 +14,11 @@ Habitat <- Major_color(seed = 420, len_x = 100, len_y = 100, homo = 5)
 ### Manual habitat main color
 Habitat <- Manual_color(seed = 420, len_x = 100, len_y = 100, homo = 5,
                         col = c("#AADD22", "#88EDCC", "#DDEE23", "#CCF0AA", "#A04FCC"),
-                        col_count = c(30, 30, 20, 15, 5),
+                        col_ratio = c(30, 30, 20, 15, 5),
                         patch = 1000)
 
 ### Species colors: draw
-Species_Traits <- Species_trait(N = 8, seed = 420)
+Species_Traits <- Species_trait(N = 7, seed = 420)
 ### Manually decide species colors
 Species_Traits <- Manual_species_trait(c("#E04E04", "#EEE123", "#BB7711", "#114514", "#116767", "#420420", "#676767"))
 
