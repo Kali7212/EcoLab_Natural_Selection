@@ -336,14 +336,22 @@ predation_fixed_rate <- function(sp_disp, habitat, species_trait, pred_intensity
   total_abundance <- nrow(sp_disp)
   pred_num <- round(total_abundance * pred_rate)
   
-  if(nrow(species_trait) == 1){
+  if(pred_num >= total_abundance){
+    sp_abund <- data.frame(species_number = c(1:nrow(species_trait)),
+                           individuals = 0)
+    return(sp_abund)
+  }
+  else if(nrow(species_trait) == 1){
     sp_abund <- data.frame(species_number = c(1),
                            individuals = nrow(sp_disp))
     return(sp_abund)
   }
-  if(pred_rate == 0){
-    sp_abund <- as.data.frame(table(sp_disp$sp))
-    colnames(sp_abund) <- c("species_number", "individuals")
+  else if(pred_rate == 0){
+    sp_abund <- data.frame(species_number = c(1:nrow(species_trait)),
+                           individuals = 0)
+    for (i in 1:nrow(sp_abund)) {
+      sp_abund$individuals[i] <- sum(color_df$sp == i)
+    }
     return(sp_abund)
     }
 
@@ -381,10 +389,14 @@ predation_fixed_rate <- function(sp_disp, habitat, species_trait, pred_intensity
   }
   
   ### Predation
-  color_df <- color_df[-order(color_df$consp, decreasing = T)[1:pred_num], ]
-  sp_abund <- as.data.frame(table(color_df$sp))
-  colnames(sp_abund) <- c("species_number", "individuals")
-  
+  # color_df <- color_df[-order(color_df$consp, decreasing = T)[1:pred_num], ]
+  ranks <- rank(-color_df$consp, ties.method = "random")
+  color_df <- color_df[(ranks > pred_num), ]
+  sp_abund <- data.frame(species_number = c(1:nrow(species_trait)),
+                         individuals = 0)
+  for (i in 1:nrow(sp_abund)) {
+    sp_abund$individuals[i] <- sum(color_df$sp == i)
+  }
   return(sp_abund)
   
 }
