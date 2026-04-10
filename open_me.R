@@ -35,8 +35,7 @@ Parameters <- list(
   ### Generations (must be integer)
   gen <- 100,
   pred_intensity <- 10, 
-  fitness_varience <- 0.05,
-  prob = T
+  fitness_varience <- 0.05
 )
 #############
 
